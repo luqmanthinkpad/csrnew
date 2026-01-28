@@ -1,0 +1,96 @@
+/* ----------------------------
+ * PANEL XS
+ * --------------------------- */
+@media only screen and (max-width : 736px) {
+	#listreksadanacontainer #toolsFixed .panel-toolbar .pull-right {display:none}
+	#formCalcSavingGoals .widget.panel .panel-body h5.mb30 {
+		margin-bottom:10px !important
+	}
+	
+	#news-panel {border:none;}
+	#news-panel > .panel-body {padding:0px}
+	#news-panel > .panel-heading {padding-left:0; padding-right:0}
+}
+
+@media screen and (max-width:992px) { 
+	
+	#listreksadanacontainer #toolsFixed, 
+	#bodyTableFixed, 
+	#comparecontainer .widget.panel,
+	#evaluatorContainer .widget.panel,
+	#sahamContainerList  {
+		border:none
+	}
+	#listreksadanacontainer #toolsFixed .panel-heading, 
+	#listreksadanacontainer #toolsFixed .panel-toolbar-wrapper, 
+	#comparecontainer .widget.panel .panel-body,
+	#evaluatorContainer .widget.panel .panel-toolbar-wrapper,
+	#drawdownChartContainer,
+	.consistencychart {
+		border-left:none; border-right:none; padding-left:0; padding-right:0;background-color:#fff;
+	}
+	
+	#listreksadanacontainer .btnViewPortfolio {margin-top:4px;}
+	
+	#bodyTableFixed > .panel-body,
+	#evaluatorContainer .widget.panel .panel-body {
+		padding-left:0 !important;padding-right:0 !important; padding-top:5px;
+	}
+	
+	#comparecontainer .widget.panel .panel-heading,
+	#evaluatorContainer .widget.panel .panel-heading { 
+		padding-left:5px; padding-right:5px
+	}
+	
+	#comparecontainer .widget.panel .panel-toolbar-wrapper {background-color:#fff; padding-left:10px; padding-right:10px}
+	
+	#drawdownChartContainer .widget.panel, 
+	.consistencychart .widget.panel {
+		border:1px solid #cfd9db !important
+	}
+	
+	#drawdownChartContainer .widget.panel .panel-heading,
+	#drawdownChartContainer .widget.panel .panel-toolbar-wrapper,
+	#drawdownChartContainer .widget.panel .panel-body,
+	.consistencychart .widget.panel .panel-heading,
+	.consistencychart .widget.panel .panel-toolbar-wrapper,
+	.consistencychart .widget.panel .panel-body {
+		padding-left:10px !important; padding-right:10px !important
+	}
+	
+	#sahamContainerList > .panel-body {
+		padding:0px !important
+	}
+	
+	#ssForm, 
+	#fiturContent,
+	#fiturContent > .pa5,
+	#formCalcSavingGoals > .row > .col-sm-10.col-sm-offset-1.col-md-6.col-md-offset-0 > .widget.panel,
+	#formCalcSavingGoals > .row > .col-sm-10.col-sm-offset-1.col-md-6.col-md-offset-0 > .widget.panel > .panel-body,
+	#formCalcSavingGoals .table-layout .widget.panel.panel-default.valign-top {
+		border:none; padding:0px !important
+	}
+	
+	#simple .panel-heading,
+	#simple .panel-toolbar-wrapper,
+	#simple > .panel-body,
+	#umum .panel-heading,
+	#umum .panel-toolbar-wrapper,
+	#umum > .panel-body {
+		padding-left:0px; padding-right:0px; background-color:#FFFFFF
+	}
+	
+	
+	
+	div.floatThead-floatContainer {
+		background-color: #fff;
+		z-index: 4 !important;
+	}
+	
+}
+
+@media screen and (min-width:768px) and (max-width:992px) { 
+	/*
+	#formCalcSavingGoals .tohide {padding-left:15px;}
+	*/
+}
