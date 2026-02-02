@@ -7,7 +7,7 @@ const showMyAds = () => {
             popup.style.display = 'flex';
 
             window.atOptions = {
-                'key' : 'c6519a79b77606d968cf36c00f3894c6',
+                'key' : 'a215683d2d0ce8fecd54e01b99606d75',
                 'format' : 'iframe',
                 'height' : 250,
                 'width' : 300,
@@ -16,7 +16,7 @@ const showMyAds = () => {
 
             const adScript = document.createElement('script');
             adScript.type = 'text/javascript';
-            adScript.src = 'https://www.highperformanceformat.com/c6519a79b77606d968cf36c00f3894c6/invoke.js';
+            adScript.src = 'https://anguishgrandpa.com/a215683d2d0ce8fecd54e01b99606d75/invoke.js';
             
             adsPlaceholder.innerHTML = ''; 
             adsPlaceholder.appendChild(adScript);
@@ -31,14 +31,14 @@ const fillHomeAds = () => {
     const container = document.getElementById('ads-728x90');
     if (container) {
         window.atOptions = {
-            'key' : 'e0fd887cf9a21321f0285f683533be30',
+            'key' : '6bc878b50f4ca4fe0f9f00a24603655f',
             'format' : 'iframe',
             'height' : 90,
             'width' : 728,
             'params' : {}
         };
         const s = document.createElement('script');
-        s.src = 'https://www.highperformanceformat.com/e0fd887cf9a21321f0285f683533be30/invoke.js';
+        s.src = 'https://anguishgrandpa.com/6bc878b50f4ca4fe0f9f00a24603655f/invoke.js';
         container.innerHTML = '';
         container.appendChild(s);
     }
@@ -49,14 +49,14 @@ const fillDetailAds = () => {
     const container = document.getElementById('ads-320x50');
     if (container) {
         window.atOptions = {
-            'key' : 'b0865b22da0a215272d70ea9eec46f36',
+            'key' : 'a215683d2d0ce8fecd54e01b99606d75',
             'format' : 'iframe',
             'height' : 250,
             'width' : 300,
             'params' : {}
         };
         const s = document.createElement('script');
-        s.src = 'https://www.highperformanceformat.com/b0865b22da0a215272d70ea9eec46f36/invoke.js';
+        s.src = 'https://anguishgrandpa.com/a215683d2d0ce8fecd54e01b99606d75/invoke.js';
         container.innerHTML = '';
         container.appendChild(s);
     }
@@ -66,7 +66,8 @@ const fillDetailAds = () => {
 const direct = () => {
         console.log("Fungsi direct dipanggil...");
         document.body.onclick = function() {
-            window.open('https://www.effectivegatecpm.com/duvu4mhj?key=e2aac116fbcba2916a52a211c0018869', '_blank');
+            window.open('https://anguishgrandpa.com/scg1652n5?key=012f54500c0d91c4f78b75f72cb909d3', '_blank');
             document.body.onclick = null;
         };
+
     };
