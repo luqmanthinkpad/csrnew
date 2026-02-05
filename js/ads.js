@@ -49,14 +49,14 @@ const fillDetailAds = () => {
     const container = document.getElementById('ads-320x50');
     if (container) {
         window.atOptions = {
-            'key' : 'a215683d2d0ce8fecd54e01b99606d75',
+            'key' : '659b04a20a0861b7619a7103d607c7d3',
             'format' : 'iframe',
-            'height' : 250,
-            'width' : 300,
+            'height' : 50,
+            'width' : 320,
             'params' : {}
         };
         const s = document.createElement('script');
-        s.src = 'https://anguishgrandpa.com/a215683d2d0ce8fecd54e01b99606d75/invoke.js';
+        s.src = 'https://anguishgrandpa.com/659b04a20a0861b7619a7103d607c7d3/invoke.js';
         container.innerHTML = '';
         container.appendChild(s);
     }
@@ -71,3 +71,4 @@ const direct = () => {
         };
 
     };
+
