@@ -259,7 +259,7 @@
             "dateModified": news.created_at,
             "author": {
                 "@type": "Organization",
-                "name": "Newsgo"
+                "name": "X"
             }
         });
 		
@@ -368,4 +368,5 @@
             fillHomeAds();
 		}
     }
+
 })();
