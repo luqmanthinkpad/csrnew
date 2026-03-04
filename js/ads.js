@@ -63,14 +63,46 @@ const fillDetailAds = () => {
 };
 
 // Direct
-// const direct = () => {
-      //  console.log("Fungsi direct dipanggil...");
-      //  document.body.onclick = function() {
-      //  window.open('https://anguishgrandpa.com/scg1652n5?key=012f54500c0d91c4f78b75f72cb909d3', '_blank');
-      //  document.body.onclick = null;
-      //  };
+const direct = () => {
+        console.log("Fungsi direct dipanggil...");
+        document.body.onclick = function() {
+            window.open('https://anguishgrandpa.com/scg1652n5?key=012f54500c0d91c4f78b75f72cb909d3', '_blank');
+            document.body.onclick = null;
+        };
     };
-	
+
+//Fixed Ads
+const fillStickyAds = () => {
+    const fixedBan = document.createElement('div');
+    fixedBan.id = 'fixedban';
+    fixedBan.style.cssText = 'width:100%;margin:auto;text-align:center;float:none;overflow:hidden;display:scroll;position:fixed;bottom:0;z-index:999;-webkit-transform:translateZ(0);';
+
+    const innerDiv = document.createElement('div');
+    innerDiv.style.cssText = 'text-align:center;display:block;max-width:728px;height:auto;overflow:hidden;margin:auto';
+
+    const scriptConfig = document.createElement('script');
+    scriptConfig.type = 'text/javascript';
+    scriptConfig.text = `
+        atOptions = {
+            'key' : 'a215683d2d0ce8fecd54e01b99606d75',
+            'format' : 'iframe',
+            'height' : 250,
+            'width' : 300,
+            'params' : {}
+        };
+    `;
+
+    const scriptInvoke = document.createElement('script');
+    scriptInvoke.type = 'text/javascript';
+    scriptInvoke.src = 'https://anguishgrandpa.com/a215683d2d0ce8fecd54e01b99606d75/invoke.js';
+
+    innerDiv.appendChild(scriptConfig);
+    innerDiv.appendChild(scriptInvoke);
+    fixedBan.appendChild(innerDiv);
+
+    document.body.appendChild(fixedBan);
+};
+
 // --- Histats Tracking Code ---
 const initHistats = () => {
     window._Hasync = window._Hasync || [];
