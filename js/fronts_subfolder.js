@@ -1,40 +1,31 @@
 (async () => {
-	const pathName = window.location.pathname;
+    const pathName = window.location.pathname;
     const urlParams = new URLSearchParams(window.location.search);
-
     const pathParts = pathName.split('/').filter(part => part.length > 0);
     
-    let detectedDomain = window.location.origin;
+    const pageParam = urlParams.get('page');
+    const baseFolder = pathParts.length > 0 ? pathParts[0] : '';
+    
     let detectedSlug = urlParams.get('detail');
-
-    if (!detectedSlug && pathParts.length > 0) {
-        const baseFolder = pathParts[0];
-        detectedDomain = `${window.location.origin}/${baseFolder}`;
-        
-        if (pathParts.length > 1) {
-            detectedSlug = pathParts[pathParts.length - 1];
-        }
+    if (!detectedSlug && pathParts.length > 1) {
+        detectedSlug = pathParts[1]; 
     }
-	
+
     const CONFIG = {
         API_URL: "https://newsgo.space",
         API_KEY: "berbahagia",
-        DOMAIN: detectedDomain
+        DOMAIN: window.location.origin + (baseFolder ? '/' + baseFolder : '')
     };
-
-    const pageParam = urlParams.get('page');
-    const detailSlug = detectedSlug;
-    let isTldMode = !urlParams.has('detail') && pathParts.length > 0;
 
     const formatIndoDate = (d) => d ? new Date(d).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) + " WIB" : "";
     const toTitleCase = (s) => s ? s.replace(/\w\S*/g, t => t.charAt(0).toUpperCase() + t.substr(1).toLowerCase()) : "";
+	
+    let isTldMode = true;
 
     const getLink = (slug) => {
-		const baseFolder = pathParts.length > 0 ? pathParts[0] : '';
-		const base = baseFolder ? `/${baseFolder}` : '';
-		
-		return isTldMode ? `${base}/${slug}` : `${base}/?detail=${slug}`;
-	};
+        const base = baseFolder ? `/${baseFolder}` : '';
+        return isTldMode ? `${base}/${slug}` : `${base}/?detail=${slug}`;
+    };
 
 	const updateHomeLinks = () => {
 		const baseFolder = pathParts.length > 0 ? pathParts[0] : '';
@@ -68,7 +59,7 @@
 						<div class="col-xs-4 col-md-3 col-lg-2"></div>
 						<div class="col-xs-4 col-md-6 col-lg-8">
 							<div class="logo-brand text-center">
-								<a href="/" class="mh-auto"><img id="main-logo" src="https://cdn.jsdelivr.net/gh/luqmanthinkpad/csrnew/img/n1_ipotnews.png" class="img-responsive hidden-xs hidden-sm mh-auto"></a><a href="/" class="mh-auto"><img id="main-logo-mobile" src="https://cdn.jsdelivr.net/gh/luqmanthinkpad/csrnew/img/n1_ipotnews_w.png" class="img-responsive visible-xs visible-sm mh-auto"></a>
+								<a href="/" class="mh-auto"><img id="main-logo" src="img/n1_ipotnews.png" class="img-responsive hidden-xs hidden-sm mh-auto"></a><a href="/" class="mh-auto"><img id="main-logo-mobile" src="img/n1_ipotnews_w.png" class="img-responsive visible-xs visible-sm mh-auto"></a>
 							</div>
 						</div>
 						<div class="col-xs-4 col-md-3 col-lg-2 text-right"></div>
@@ -102,7 +93,7 @@
                 </section>
                 <footer class="footer pt20 pb20 bgcolor-gray" style="border-top: 1px solid #eee; margin-top: 30px;">
                     <div class="container text-center">
-                        <p style="font-size: 12px; color: #777;">&copy; All rights reserved.</p>
+                        <p style="font-size: 12px; color: #777;">&copy; 2026 Newsgo. All rights reserved.</p>
                     </div>
                 </footer>
             </div>
@@ -218,6 +209,8 @@
         const res = await fetchAPI('/api/news');
         if (!res || res.status !== "success") return renderNoConnection();
 
+		isTldMode = (res.config && res.config.type === 'path');
+		
 		injectSchema({
             "@context": "https://schema.org",
             "@type": "ItemList",
@@ -244,6 +237,8 @@
 
         if (!resDetail || resDetail.status !== "success") return renderNoConnection();
 
+		isTldMode = (resDetail.config && resDetail.config.type === 'path');
+		
         const news = resDetail.data;
         const b = resBacklinks || { data: [] };
         const r = resRelated || { data: [] };
@@ -259,7 +254,7 @@
             "dateModified": news.created_at,
             "author": {
                 "@type": "Organization",
-                "name": "X"
+                "name": "Newsgo"
             }
         });
 		
@@ -324,12 +319,13 @@
     injectMetaLinks();
     
     if (pageParam === 'sitemap' || pathName.endsWith('/sitemap.xml')) {
-		await renderRawXml('sitemap');
-	}else if (pageParam === 'rss' || pathName === '/rss.xml') {
-		await renderRawXml('rss');
-    } else if (detailSlug && !detailSlug.endsWith('.xml')) {
-        await loadDetail(detailSlug);
+        await renderRawXml('sitemap');
+    } else if (pageParam === 'rss' || pathName === '/rss.xml') {
+        await renderRawXml('rss');
+    } else if (detectedSlug && !detectedSlug.endsWith('.xml')) {
+        await loadDetail(detectedSlug);
 		updateHomeLinks();
+		if (typeof fillStickyAds === "function") fillStickyAds(); //Ads fillStickyAds
 		
 		if (typeof initHistats === "function") {
 			try {
@@ -338,18 +334,14 @@
 			}
 		}
 		
-		if (typeof direct === "function") direct();
-            else if (window.direct && typeof window.direct === "function") window.direct();
+		if (typeof direct === "function") direct(); else if (window.direct && typeof window.direct === "function") window.direct(); //Ads Direct
 		
-		//if (typeof fillHomeAds === "function") fillHomeAds();
-        if (typeof fillDetailAds === "function") {
-            const topAds = document.getElementById('top-home-ads');
-            if (topAds) topAds.style.display = 'block'; 
-            fillDetailAds();
-        }
+		//if (typeof fillHomeAds === "function") fillHomeAds(); //Ads Home
+        //if (typeof fillDetailAds === "function") { const topAds = document.getElementById('top-home-ads'); if (topAds) topAds.style.display = 'block';  fillDetailAds(); }  //Ads Detail Sidebar
     } else {
         await loadHome();
 		updateHomeLinks();
+		if (typeof fillStickyAds === "function") fillStickyAds(); //Ads fillStickyAds
 		
 		if (typeof initHistats === "function") {
 			try {
@@ -358,17 +350,11 @@
 			}
 		}
 		
-		if (typeof direct === "function") direct();
-            else if (window.direct && typeof window.direct === "function") window.direct();
+		if (typeof direct === "function") direct(); else if (window.direct && typeof window.direct === "function") window.direct();
 		
-		//if (typeof showMyAds === "function") showMyAds();
-		if (typeof fillHomeAds === "function") {
-			const topAds = document.getElementById('ads-728x90');
-            if (topAds) topAds.style.display = 'block'; 
-            fillHomeAds();
-		}
+		if (typeof direct === "function") direct(); else if (window.direct && typeof window.direct === "function") window.direct(); //Ads Direct
+		
+		//if (typeof fillHomeAds === "function") fillHomeAds(); //Ads Home
+        //if (typeof fillDetailAds === "function") { const topAds = document.getElementById('top-home-ads'); if (topAds) topAds.style.display = 'block';  fillDetailAds(); }  //Ads Detail Sidebar
     }
-
 })();
-
-
