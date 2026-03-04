@@ -59,7 +59,7 @@
 						<div class="col-xs-4 col-md-3 col-lg-2"></div>
 						<div class="col-xs-4 col-md-6 col-lg-8">
 							<div class="logo-brand text-center">
-								<a href="/" class="mh-auto"><img id="main-logo" src="img/n1_ipotnews.png" class="img-responsive hidden-xs hidden-sm mh-auto"></a><a href="/" class="mh-auto"><img id="main-logo-mobile" src="img/n1_ipotnews_w.png" class="img-responsive visible-xs visible-sm mh-auto"></a>
+								<a href="/" class="mh-auto"><img id="main-logo" src="https://cdn.jsdelivr.net/gh/luqmanthinkpad/csrnew/img/n1_ipotnews.png" class="img-responsive hidden-xs hidden-sm mh-auto"></a><a href="/" class="mh-auto"><img id="main-logo-mobile" src="https://cdn.jsdelivr.net/gh/luqmanthinkpad/csrnew/img/n1_ipotnews_w.png" class="img-responsive visible-xs visible-sm mh-auto"></a>
 							</div>
 						</div>
 						<div class="col-xs-4 col-md-3 col-lg-2 text-right"></div>
@@ -182,7 +182,7 @@
                     </div>
                     <p style="color: #666; font-size: 13px; margin-bottom: 25px;">Akses ditolak atau server backend tidak merespon.</p>
                     <div style="display: grid; gap: 10px;">
-                        <a href="https://t.me/newsgo.space" target="_blank" style="text-decoration: none; padding: 12px; background: #0088cc; color: white; border-radius: 8px; font-weight: 600;">Hubungi Administrator</a>
+                        <a href="https://t.me/" target="_blank" style="text-decoration: none; padding: 12px; background: #0088cc; color: white; border-radius: 8px; font-weight: 600;">Hubungi Administrator</a>
                         <button onclick="window.location.reload()" style="cursor: pointer; padding: 12px; background: white; color: #555; border: 1px solid #ddd; border-radius: 8px;">Coba Muat Ulang</button>
                     </div>
                 </div>
@@ -254,7 +254,7 @@
             "dateModified": news.created_at,
             "author": {
                 "@type": "Organization",
-                "name": "Newsgo"
+                "name": "X"
             }
         });
 		
@@ -358,3 +358,4 @@
         //if (typeof fillDetailAds === "function") { const topAds = document.getElementById('top-home-ads'); if (topAds) topAds.style.display = 'block';  fillDetailAds(); }  //Ads Detail Sidebar
     }
 })();
+
