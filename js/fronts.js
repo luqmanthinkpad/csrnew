@@ -3,7 +3,12 @@
 		API_URL: "https://newsgo.space",
 		API_KEY: "berbahagia", 
 		DOMAIN: window.location.origin,
-		DATABASE_NAME: "database" 
+		DATABASE_NAME: "database",
+		SITE_NAME: "Diagram",
+		DEFAULT_TITLE: "Wiring",
+		DEFAULT_DESCRIPTION: "Wiring, Diagram, Schematic",
+		DEFAULT_KEYWORDS: "",
+		DEFAULT_IMAGE: "https://cdn.jsdelivr.net/gh/luqmanthinkpad/csrnew/img/n1_ipotnews.png"
 	};
 
     const memoryCache = new Map();
@@ -107,6 +112,115 @@
         script.type = 'application/ld+json';
         script.text = JSON.stringify(data);
         document.head.appendChild(script);
+    };
+
+	const stripHtml = (value) => String(value || "")
+        .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, " ")
+        .replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, " ")
+        .replace(/<[^>]*>/g, " ")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/&amp;/gi, "&")
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/gi, "'")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    const limitText = (value, max = 160) => {
+        const clean = stripHtml(value);
+        if (clean.length <= max) return clean;
+        return clean.substring(0, max).replace(/\s+\S*$/, "") + "...";
+    };
+
+    const makeAbsoluteUrl = (url) => {
+        if (!url) return "";
+        try { return new URL(url, CONFIG.DOMAIN).href; } catch (e) { return url; }
+    };
+
+    const getFirstImageUrl = (images) => {
+        if (!images) return "";
+        let list = images;
+        if (typeof list === 'string') {
+            try { list = JSON.parse(list); } catch (e) { return makeAbsoluteUrl(list); }
+        }
+        if (!Array.isArray(list)) list = [list];
+        const first = list.find(Boolean);
+        if (!first) return "";
+        return makeAbsoluteUrl(typeof first === 'object' ? (first.url || first.src || first.image || first.thumbnail || "") : first);
+    };
+
+    const makeKeywordString = (values) => {
+        const output = [];
+        const add = (value) => {
+            if (!value) return;
+            if (Array.isArray(value)) return value.forEach(add);
+            if (typeof value === 'object') return Object.values(value).forEach(add);
+            String(value).split(',').forEach(item => {
+                const clean = stripHtml(item).toLowerCase();
+                if (clean && !output.includes(clean)) output.push(clean);
+            });
+        };
+        values.forEach(add);
+        return output.slice(0, 25).join(', ');
+    };
+
+    const findMetaTag = (attrName, attrValue) => {
+        return Array.from(document.getElementsByTagName('meta')).find(meta => meta.getAttribute(attrName) === attrValue);
+    };
+
+    const setMetaTag = (attrName, attrValue, content) => {
+        if (!document.head || !content) return;
+        let meta = findMetaTag(attrName, attrValue);
+        if (!meta) {
+            meta = document.createElement('meta');
+            meta.setAttribute(attrName, attrValue);
+            document.head.appendChild(meta);
+        }
+        meta.setAttribute('content', content);
+    };
+
+    const setCanonical = (url) => {
+        if (!document.head || !url) return;
+        let canonical = document.querySelector('link[rel="canonical"]');
+        if (!canonical) {
+            canonical = document.createElement('link');
+            canonical.rel = 'canonical';
+            document.head.appendChild(canonical);
+        }
+        canonical.href = makeAbsoluteUrl(url);
+    };
+
+    const applySeoMeta = ({ title, description, keywords, image, url, type = 'website' }) => {
+        const finalTitle = limitText(title || CONFIG.DEFAULT_TITLE, 65);
+        const finalDescription = limitText(description || CONFIG.DEFAULT_DESCRIPTION, 160);
+        const finalKeywords = keywords || CONFIG.DEFAULT_KEYWORDS;
+        const finalImage = makeAbsoluteUrl(image || CONFIG.DEFAULT_IMAGE);
+        const finalUrl = makeAbsoluteUrl(url || `${CONFIG.DOMAIN}/`);
+
+        document.title = finalTitle;
+
+        setMetaTag('name', 'title', finalTitle);
+        setMetaTag('name', 'description', finalDescription);
+        setMetaTag('name', 'keywords', finalKeywords);
+        setMetaTag('name', 'robots', 'index, follow, max-image-preview:large');
+        setMetaTag('name', 'googlebot', 'index, follow, max-image-preview:large');
+        setMetaTag('name', 'author', CONFIG.SITE_NAME);
+        setMetaTag('name', 'language', 'id-ID');
+        setMetaTag('name', 'theme-color', '#ffffff');
+
+        setMetaTag('property', 'og:locale', 'id_ID');
+        setMetaTag('property', 'og:type', type);
+        setMetaTag('property', 'og:site_name', CONFIG.SITE_NAME);
+        setMetaTag('property', 'og:title', finalTitle);
+        setMetaTag('property', 'og:description', finalDescription);
+        setMetaTag('property', 'og:url', finalUrl);
+        setMetaTag('property', 'og:image', finalImage);
+
+        setMetaTag('name', 'twitter:card', 'summary_large_image');
+        setMetaTag('name', 'twitter:title', finalTitle);
+        setMetaTag('name', 'twitter:description', finalDescription);
+        setMetaTag('name', 'twitter:image', finalImage);
+
+        setCanonical(finalUrl);
     };
 	
     const renderSkeletonHome = () => {
@@ -212,6 +326,20 @@
         const res = await fetchAPI('/api/news');
         if (!res) return renderNoConnection();
 
+        const homeKeywords = makeKeywordString([
+            CONFIG.DEFAULT_KEYWORDS,
+            ...(res.data || []).slice(0, 15).map(item => item.keyword || item.title || item.slug)
+        ]);
+
+        applySeoMeta({
+            title: CONFIG.DEFAULT_TITLE,
+            description: CONFIG.DEFAULT_DESCRIPTION,
+            keywords: homeKeywords || CONFIG.DEFAULT_KEYWORDS,
+            image: CONFIG.DEFAULT_IMAGE,
+            url: `${CONFIG.DOMAIN}/`,
+            type: 'website'
+        });
+
 		injectSchema({
             "@context": "https://schema.org",
             "@type": "ItemList",
@@ -240,7 +368,6 @@
         if (!resDetail) return renderNoConnection();
 
         const news = resDetail.data;
-        document.title = toTitleCase(news.keyword);
 		
 		injectSchema({
             "@context": "https://schema.org",
@@ -264,6 +391,27 @@
 		if (typeof imagesData === 'string') {
 			try { imagesData = JSON.parse(imagesData); } catch(e) { imagesData = []; }
 		}
+
+        const detailTitleBase = toTitleCase(news.keyword || news.title || slug);
+        const detailDescription = limitText(
+            news.meta_description || news.description || news.summary || news.excerpt ||
+            (Array.isArray(contentData) ? contentData.join(' ') : contentData) || detailTitleBase,
+            160
+        );
+        const detailKeywords = makeKeywordString([
+            news.keyword, news.title, news.keywords, news.tags, news.category, slug, CONFIG.DEFAULT_KEYWORDS
+        ]);
+        const detailImage = getFirstImageUrl(imagesData) || CONFIG.DEFAULT_IMAGE;
+        const detailUrl = `${CONFIG.DOMAIN}${getLink(slug, type)}`;
+
+        applySeoMeta({
+            title: `${detailTitleBase} - ${CONFIG.SITE_NAME}`,
+            description: detailDescription,
+            keywords: detailKeywords || CONFIG.DEFAULT_KEYWORDS,
+            image: detailImage,
+            url: detailUrl,
+            type: 'article'
+        });
 
 		const bodyHtml = contentData.map((text, i) => {
 			const imgUrl = (imagesData && imagesData[i]) ? (imagesData[i].url || imagesData[i]) : "";
