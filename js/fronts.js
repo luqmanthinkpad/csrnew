@@ -1,9 +1,16 @@
 (async () => {
-     const CONFIG = {
+    const forceRemoveLang = () => {
+        document.documentElement.removeAttribute('lang');
+        if (document.body) document.body.removeAttribute('lang');
+    };
+    forceRemoveLang();
+    document.addEventListener("DOMContentLoaded", forceRemoveLang);
+	
+    const CONFIG = {
 		API_URL: "https://newsgo.space",
 		API_KEY: "berbahagia", 
 		DOMAIN: window.location.origin,
-		DATABASE_NAME: "database",
+		DATABASE_NAME: "automotive",
 		SITE_NAME: "Diagram",
 		DEFAULT_TITLE: "Wiring",
 		DEFAULT_DESCRIPTION: "Wiring, Diagram, Schematic",
@@ -12,7 +19,6 @@
 	};
 
     const memoryCache = new Map();
-
     const pathName = window.location.pathname;
     const urlParams = new URLSearchParams(window.location.search);
     const pageParam = urlParams.get('page');
@@ -32,22 +38,32 @@
 
     let isTldMode = (pathName !== '/' && !urlParams.has('detail'));
 
-    const formatIndoDate = (d) => d ? new Date(d).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) + " WIB" : "";
+	const formatUTCDate = (d) => {
+        if (!d) return "";
+        const dateObj = (!isNaN(d) && d.toString().length <= 10) ? new Date(d * 1000) : new Date(d);
+        return dateObj.toISOString();
+    };
+
+    const formatSimpleDate = (d) => {
+        if (!d) return "";
+        const dateObj = (!isNaN(d) && d.toString().length <= 10) ? new Date(d * 1000) : new Date(d);
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     const toTitleCase = (s) => s ? s.replace(/\w\S*/g, t => t.charAt(0).toUpperCase() + t.substr(1).toLowerCase()) : "";
-    const getLink = (slug, prefix = "news") => {
-		return isTldMode ? `/${prefix}/${slug}` : `/?detail=${slug}`;
-	};
+    const getLink = (slug, prefix = "news") => isTldMode ? `/${prefix}/${slug}` : `/?detail=${slug}`;
 
 	const getSkeletonStyle = () => `
         <style>
             .skeleton { background: #f2f4f5;position: relative; overflow: hidden; border-radius: 2px; }
             .skeleton::after {content: ""; position: absolute; top: 0; right: 0; bottom: 0; left: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);animation: shimmer 1.5s infinite;}
             @keyframes shimmer { 100% { transform: translateX(100%); } }
-            
             .sk-item { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
             .sk-title { height: 18px; width: 85%; margin-top: 5px; margin-bottom: 5px; }
             .sk-text { height: 10px; width: 30%; }
-            
             .sk-h1 { height: 32px; width: 90%; margin-bottom: 10px; }
             .sk-img { height: 350px; width: 100%; margin: 10px 0 20px 0; border-radius: 8px; }
             .sk-body { height: 14px; width: 100%; margin-bottom: 12px; }
@@ -69,7 +85,6 @@
 					</div>
 				</div>
 			</div>
-			
 			<div class="container-fluid hidden-xs hidden-sm">
 				<div id="navbarIpotnews" class="navbar navbar-default">
 					<div class="collapse navbar-collapse" id="ipotnewsMainMenu">
@@ -82,7 +97,6 @@
 					</div>
 				</div>
 			</div>
-			
             <div class="clearfix mm-page mm-slideout">
                 <section class="startcontent newsonly">
                     <div class="header sub-menu single"><ul class="breadcrumb" role="tablist"></ul></div>
@@ -93,18 +107,17 @@
                         </div>
                     </section>
                 </section>
-                <footer class="footer pt20 pb20 bgcolor-gray" style="border-top: 1px solid #eee; margin-top: 30px;">
-                    <div class="container text-center">
-                        <p style="font-size: 12px; color: #777;">&copy; All rights reserved.</p>
-                    </div>
+                <footer class="footer pt20 pb20 bgcolor-gray" style="border-top: 1px solid #eee; margin-top: 30px; padding-bottom: 70px;">
+                    <div class="container text-center"><p style="font-size: 12px; color: #777;">&copy; All rights reserved.</p></div>
                 </footer>
             </div>
-            <div id="popup-ads-container" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
-				<div class="popup-content" style="position:relative; background:#fff; padding:10px; border-radius:8px; width:320px; min-height:270px; display:flex; flex-direction:column; align-items:center;">
-					<button onclick="document.getElementById('popup-ads-container').style.display='none'" style="position:absolute; top:-15px; right:-15px; background:#000; color:#fff; border-radius:50%; width:30px; height:30px; border:2px solid #fff; cursor:pointer; font-size:18px; line-height:1;">&times;</button>
-					<div id="ads-placeholder" style="width:300px; height:250px; overflow:hidden;"></div>
-				</div>
-			</div>
+            
+            <div id="sticky-bottom-ad" style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 99999; display: flex; justify-content: center; background: rgba(0,0,0,0.2);">
+                <div style="position: relative; background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.1);">
+                    <button onclick="document.getElementById('sticky-bottom-ad').style.display='none'" style="position: absolute; top: -22px; right: 0; background: #ff4d4f; color: white; border: none; width: 22px; height: 22px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 4px 4px 0 0;">&times;</button>
+                    <div id="ads-sticky" style="width: 320px; height: 50px; background: #f9f9f9; display: flex; align-items: center; justify-content: center; color: #999;"></div>
+                </div>
+            </div>
     `;
 
 	const injectSchema = (data) => {
@@ -114,17 +127,7 @@
         document.head.appendChild(script);
     };
 
-	const stripHtml = (value) => String(value || "")
-        .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, " ")
-        .replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, " ")
-        .replace(/<[^>]*>/g, " ")
-        .replace(/&nbsp;/gi, " ")
-        .replace(/&amp;/gi, "&")
-        .replace(/&quot;/gi, '"')
-        .replace(/&#39;/gi, "'")
-        .replace(/\s+/g, " ")
-        .trim();
-
+	const stripHtml = (value) => String(value || "").replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, " ").replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/&quot;/gi, '"').replace(/&#39;/gi, "'").replace(/\s+/g, " ").trim();
     const limitText = (value, max = 160) => {
         const clean = stripHtml(value);
         if (clean.length <= max) return clean;
@@ -163,10 +166,7 @@
         return output.slice(0, 25).join(', ');
     };
 
-    const findMetaTag = (attrName, attrValue) => {
-        return Array.from(document.getElementsByTagName('meta')).find(meta => meta.getAttribute(attrName) === attrValue);
-    };
-
+    const findMetaTag = (attrName, attrValue) => Array.from(document.getElementsByTagName('meta')).find(meta => meta.getAttribute(attrName) === attrValue);
     const setMetaTag = (attrName, attrValue, content) => {
         if (!document.head || !content) return;
         let meta = findMetaTag(attrName, attrValue);
@@ -189,7 +189,7 @@
         canonical.href = makeAbsoluteUrl(url);
     };
 
-    const applySeoMeta = ({ title, description, keywords, image, url, type = 'website' }) => {
+    const applySeoMeta = ({ title, description, keywords, image, url, type = 'website', createdAt }) => {
         const finalTitle = limitText(title || CONFIG.DEFAULT_TITLE, 65);
         const finalDescription = limitText(description || CONFIG.DEFAULT_DESCRIPTION, 160);
         const finalKeywords = keywords || CONFIG.DEFAULT_KEYWORDS;
@@ -197,33 +197,77 @@
         const finalUrl = makeAbsoluteUrl(url || `${CONFIG.DOMAIN}/`);
 
         document.title = finalTitle;
-
         setMetaTag('name', 'title', finalTitle);
         setMetaTag('name', 'description', finalDescription);
         setMetaTag('name', 'keywords', finalKeywords);
-        setMetaTag('name', 'robots', 'index, follow, max-image-preview:large');
-        setMetaTag('name', 'googlebot', 'index, follow, max-image-preview:large');
-        setMetaTag('name', 'author', CONFIG.SITE_NAME);
-        setMetaTag('name', 'language', 'id-ID');
-        setMetaTag('name', 'theme-color', '#ffffff');
-
-        setMetaTag('property', 'og:locale', 'id_ID');
+        setMetaTag('name', 'robots', 'index, follow');
+        setMetaTag('name', 'googlebot', 'index, follow');
+        setMetaTag('name', 'language', 'en-US');
+        setMetaTag('property', 'og:locale', 'en-US');
         setMetaTag('property', 'og:type', type);
-        setMetaTag('property', 'og:site_name', CONFIG.SITE_NAME);
         setMetaTag('property', 'og:title', finalTitle);
         setMetaTag('property', 'og:description', finalDescription);
         setMetaTag('property', 'og:url', finalUrl);
         setMetaTag('property', 'og:image', finalImage);
-
         setMetaTag('name', 'twitter:card', 'summary_large_image');
         setMetaTag('name', 'twitter:title', finalTitle);
         setMetaTag('name', 'twitter:description', finalDescription);
         setMetaTag('name', 'twitter:image', finalImage);
-
-        setCanonical(finalUrl);
+    
+		if (type === 'article' && createdAt) { 
+			setMetaTag('property', 'article:published_time', createdAt);
+			setMetaTag('property', 'article:modified_time', createdAt);
+		}
+		setCanonical(finalUrl);
     };
 	
-    const renderSkeletonHome = () => {
+    const fetchAPI = async (endpoint) => {
+        if (memoryCache.has(endpoint)) return memoryCache.get(endpoint); 
+        
+        try {
+            const response = await fetch(`${CONFIG.API_URL}${endpoint}`, {
+                headers: { 
+                    'x-api-key': CONFIG.API_KEY, 
+                    'original-domain': CONFIG.DOMAIN,
+                    'target-db': CONFIG.DATABASE_NAME
+                }
+            });
+
+            if (response.status === 429) {
+                const errorData = await response.json();
+                renderRateLimitMessage(errorData.error);
+                return null;
+            }
+
+            if (response.status === 404) {
+                return { status: "not_found" };
+            }
+
+            if (!response.ok) throw new Error("Server Error");
+
+            const data = await response.json();
+
+            if (data.status === "success") {
+                memoryCache.set(endpoint, data);
+            }
+
+            return data;
+        } catch (e) { 
+            console.error("Fetch Error:", e);
+            return null; 
+        }
+    };
+
+    const renderRateLimitMessage = (msg) => {
+        document.body.innerHTML = `
+            <div style="font-family:sans-serif; text-align:center; padding:50px;">
+                <h2 style="color:#ed5466;">Akses Dibatasi</h2>
+                <p style="color:#666;">${msg || "Anda telah mencapai batas akses."}</p>
+                <button onclick="window.location.reload()" style="padding:10px 20px; cursor:pointer;">Coba Muat Ulang</button>
+            </div>`;
+    };
+
+    const renderSkeletonHome = () => { 
 		if (!document.body) return;
 		let items = "";
 		for (let i = 0; i < 8; i++) items += `<div class="sk-item"><div class="skeleton sk-text"></div><div class="skeleton sk-title"></div></div>`;
@@ -231,14 +275,14 @@
 		const html = getSkeletonStyle() + wrapInLayout(`<div class="row"><div class="col-md-8 col-md-offset-2"><div class="listMoreLeft">${items}</div></div></div>`);
 		document.body.innerHTML = html;
 	};
-
-	const renderSkeletonDetail = () => {
-        const skeletonBody = `<div class="row"><div class="col-sm-8"><div class="skeleton sk-h1"></div><div class="skeleton sk-text" style="margin-bottom:20px;"></div><hr><div class="skeleton sk-img"></div><div class="skeleton sk-body"></div><div class="skeleton sk-body"></div></div><aside class="col-sm-4"><div class="skeleton" style="height:250px; width:300px; margin-bottom:30px;"></div><div class="skeleton sk-title" style="width:50%; height:25px;"></div><div class="skeleton sk-item" style="height:50px;"></div></aside></div>`;
+	
+    const renderSkeletonDetail = () => {
+		const skeletonBody = `<div class="row"><div class="col-sm-8"><div class="skeleton sk-h1"></div><div class="skeleton sk-text" style="margin-bottom:20px;"></div><hr><div class="skeleton sk-img"></div><div class="skeleton sk-body"></div><div class="skeleton sk-body"></div></div><aside class="col-sm-4"><div class="skeleton" style="height:250px; width:300px; margin-bottom:30px;"></div><div class="skeleton sk-title" style="width:50%; height:25px;"></div><div class="skeleton sk-item" style="height:50px;"></div></aside></div>`;
         document.body.innerHTML = getSkeletonStyle() + wrapInLayout(skeletonBody);
-    };
-
-    const renderNoConnection = async () => {
-        if (!document.body) {
+	};
+	
+    const renderNoConnection = async () => { 
+		if (!document.body) {
             setTimeout(renderNoConnection, 50);
             return;
         }
@@ -274,202 +318,230 @@
             </div>`;
         
         document.body.innerHTML = errorHtml;
-    };
+	};
 
-    const fetchAPI = async (endpoint) => {
-        if (memoryCache.has(endpoint)) return memoryCache.get(endpoint); 
+	const renderNotFound = () => {
+        const notFoundHtml = `
+            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f0f2f5;">
+                <div style="text-align: center; padding: 40px; background: white; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 400px; width: 90%;">
+                    <div style="font-size: 80px; font-weight: 800; color: #e8e8e8; line-height: 1; margin-bottom: 10px;">404</div>
+                    <h2 style="color: #1a1a1a; margin: 0 0 10px; font-size: 22px; font-weight: 700;">Halaman Tidak Ditemukan</h2>
+                    <p style="color: #666; font-size: 14px; margin-bottom: 25px; line-height: 1.6;">Maaf, artikel yang Anda cari tidak ditemukan, mungkin sudah dihapus, atau ada kesalahan pada URL.</p>
+                    <a href="/" style="display: inline-block; cursor: pointer; padding: 12px 24px; background: #0088cc; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: background 0.3s;">Kembali ke Beranda</a>
+                </div>
+            </div>`;
         
-        try {
-            const response = await fetch(`${CONFIG.API_URL}${endpoint}`, {
-                headers: { 
-                    'x-api-key': CONFIG.API_KEY, 
-                    'original-domain': CONFIG.DOMAIN,
-                    'target-db': CONFIG.DATABASE_NAME
-                }
-            });
-
-            if (response.status === 429) {
-                const errorData = await response.json();
-                renderRateLimitMessage(errorData.error);
-                return null;
-            }
-
-            if (!response.ok) throw new Error("Server Error");
-
-            const data = await response.json();
-
-            if (data.status === "success") {
-                memoryCache.set(endpoint, data);
-            }
-
-            return data;
-        } catch (e) { 
-            console.error("Fetch Error:", e);
-            return null; 
-        }
+        document.body.innerHTML = notFoundHtml;
+        document.title = "404 Not Found - " + CONFIG.SITE_NAME;
     };
-
-    const renderRateLimitMessage = (msg) => {
-        document.body.innerHTML = `
-            <div style="font-family:sans-serif; text-align:center; padding:50px;">
-                <h2 style="color:#ed5466;">Akses Dibatasi</h2>
-                <p style="color:#666;">${msg || "Anda telah mencapai batas akses."}</p>
-                <hr style="width:50px; border:1px solid #eee;">
-                <button onclick="window.location.reload()" style="padding:10px 20px; cursor:pointer;">Coba Muat Ulang</button>
-            </div>
-        `;
-    };
-
+	
     const loadHome = async () => {
-        if(!memoryCache.has('/api/news')) renderSkeletonHome();
-        
         const res = await fetchAPI('/api/news');
         if (!res) return renderNoConnection();
 
-        const homeKeywords = makeKeywordString([
-            CONFIG.DEFAULT_KEYWORDS,
-            ...(res.data || []).slice(0, 15).map(item => item.keyword || item.title || item.slug)
-        ]);
+        const homeKeywords = makeKeywordString([CONFIG.DEFAULT_KEYWORDS, ...(res.data || []).slice(0, 15).map(item => item.keyword || item.title || item.slug)]);
 
         applySeoMeta({
-            title: CONFIG.DEFAULT_TITLE,
-            description: CONFIG.DEFAULT_DESCRIPTION,
-            keywords: homeKeywords || CONFIG.DEFAULT_KEYWORDS,
-            image: CONFIG.DEFAULT_IMAGE,
-            url: `${CONFIG.DOMAIN}/`,
-            type: 'website'
-        });
+			title: CONFIG.SITE_NAME,
+			description: CONFIG.DEFAULT_DESCRIPTION,
+			keywords: homeKeywords,
+			image: CONFIG.DEFAULT_IMAGE,
+			url: `${CONFIG.DOMAIN}/`,
+			type: 'website' 
+		});
 
-		injectSchema({
-            "@context": "https://schema.org",
-            "@type": "ItemList",
-            "itemListElement": res.data.map((news, index) => ({
-                "@type": "ListItem", "position": index + 1, "url": `${CONFIG.DOMAIN}${getLink(news.slug)}`
-            }))
-        });
-		
+        // 3. Menggunakan <h2> untuk listing di Home
 		const listHtml = res.data.map(news => `
-    <dl class="listNews" style="margin-bottom:20px;">
-        <small class="text-muted">${formatIndoDate(news.created_at)}</small>
-        <dt><a href="${getLink(news.slug, 'askme')}" style="color:#086cab; font-weight:bold;">
-            ${toTitleCase(news.keyword)}
-        </a></dt>
-    </dl>`).join('');
+        <div class="listNews" style="margin-bottom:20px;">
+            <small class="text-muted">${formatSimpleDate(news.created_at)}</small>
+            <h2 style="font-size: 16px; margin: 3px 0 0 0; line-height: 1.4;">
+                <a href="${getLink(news.slug, 'askme')}" style="color:#086cab; font-weight:bold; text-decoration:none;">
+                    ${toTitleCase(news.keyword)}
+                </a>
+            </h2>
+        </div>`).join('');
 		
         document.body.innerHTML = wrapInLayout(`<div class="row"><div class="col-md-8 col-md-offset-2"><div class="listMoreLeft divColumn" id="news-list">${listHtml}</div></div></div>`);
     };
-
 	
     const loadDetail = async (slug, type = "news") => {
-        const detailEndpoint = `/api/news/${type}/${slug}`;
-        if(!memoryCache.has(detailEndpoint)) renderSkeletonDetail();
-        
-        const resDetail = await fetchAPI(detailEndpoint);
-        if (!resDetail) return renderNoConnection();
+		const detailEndpoint = `/api/news/${type}/${slug}`;
+		if (!memoryCache.has(detailEndpoint)) renderSkeletonDetail();
+		
+		const [resDetail, resBacklinks, resRelated] = await Promise.all([
+			fetchAPI(detailEndpoint),
+            null, 
+			fetchAPI('/api/news/related').catch(() => null)
+		]);
+		
+		if (resDetail && resDetail.status === "not_found") {
+			return renderNotFound();
+		}
 
-        const news = resDetail.data;
-		
-		injectSchema({
-            "@context": "https://schema.org",
-            "@type": "NewsArticle",
-            "headline": toTitleCase(news.keyword),
-            "image": news.json_images || [],
-            "datePublished": news.created_at,
-            "dateModified": news.created_at,
-            "author": {
-                "@type": "Organization",
-                "name": "X"
-            }
-        });
-		
+		if (!resDetail || resDetail.status !== "success") {
+			return renderNoConnection();
+		}
+
+		const news = resDetail.data;
+		const pubDateUTC = formatUTCDate(news.created_at || news.updated_at);
+        const pubDateSimple = formatSimpleDate(news.created_at || news.updated_at);
+		const cleanTitle = toTitleCase(news.keyword || news.title);
+
 		let contentData = news.json_sentences || news.content || []; 
 		let imagesData = news.json_images || news.images || [];
 
-		if (typeof contentData === 'string') {
-			try { contentData = JSON.parse(contentData); } catch(e) { contentData = [contentData]; }
-		}
-		if (typeof imagesData === 'string') {
-			try { imagesData = JSON.parse(imagesData); } catch(e) { imagesData = []; }
-		}
+		if (typeof contentData === 'string') { try { contentData = JSON.parse(contentData); } catch(e) { contentData = [contentData]; } }
+		if (typeof imagesData === 'string') { try { imagesData = JSON.parse(imagesData); } catch(e) { imagesData = []; } }
 
-        const detailTitleBase = toTitleCase(news.keyword || news.title || slug);
-        const detailDescription = limitText(
-            news.meta_description || news.description || news.summary || news.excerpt ||
-            (Array.isArray(contentData) ? contentData.join(' ') : contentData) || detailTitleBase,
-            160
-        );
-        const detailKeywords = makeKeywordString([
-            news.keyword, news.title, news.keywords, news.tags, news.category, slug, CONFIG.DEFAULT_KEYWORDS
-        ]);
-        const detailImage = getFirstImageUrl(imagesData) || CONFIG.DEFAULT_IMAGE;
-        const detailUrl = `${CONFIG.DOMAIN}${getLink(slug, type)}`;
+		const detailDescription = limitText(news.meta_desc || (Array.isArray(contentData) ? contentData.join(' ') : contentData) || cleanTitle, 160);
+		const detailKeywords = makeKeywordString([news.meta_keyword, news.keyword, news.title, slug, CONFIG.DEFAULT_KEYWORDS]);
+		const detailImage = getFirstImageUrl(imagesData) || CONFIG.DEFAULT_IMAGE;
+		const detailUrl = `${CONFIG.DOMAIN}${getLink(slug, type)}`;
+		
+		const schemaGraph = {
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": ["Person", "Organization"],
+                    "@id": `${CONFIG.DOMAIN}/#person`,
+                    "name": "Admin"
+                },
+                {
+                    "@type": "WebSite",
+                    "@id": `${CONFIG.DOMAIN}/#website`,
+                    "url": `${CONFIG.DOMAIN}/`,
+                    "name": CONFIG.SITE_NAME,
+                    "publisher": { "@id": `${CONFIG.DOMAIN}/#person` },
+                    "inLanguage": "en_US"
+                },
+                {
+                    "@type": "ImageObject",
+                    "@id": detailImage,
+                    "url": detailImage,
+                    "inLanguage": "en_US"
+                },
+                {
+                    "@type": "WebPage",
+                    "@id": `${detailUrl}#webpage`,
+                    "url": detailUrl,
+                    "name": cleanTitle,
+                    "datePublished": pubDateUTC,
+                    "dateModified": pubDateUTC,
+                    "primaryImageOfPage": { "@id": detailImage },
+                    "inLanguage": "en_US"
+                },
+                {
+                    "@type": "Person",
+                    "@id": `${CONFIG.DOMAIN}/page/contact.html`,
+                    "name": "Admin",
+                    "url": `${CONFIG.DOMAIN}/page/contact.html`
+                
+                },
+                {
+                    "@type": "BlogPosting",
+                    "headline": cleanTitle,
+                    "keywords": detailKeywords,
+                    "datePublished": pubDateUTC,
+                    "dateModified": pubDateUTC,
+                    "articleSection": type,
+                    "author": { "@id": `${CONFIG.DOMAIN}/page/contact.html`, "name": "Admin" },
+                    "publisher": { "@id": `${CONFIG.DOMAIN}/#person` },
+                    "description": detailDescription,
+                    "name": cleanTitle,
+                    "@id": `${detailUrl}#richSnippet`,
+                    "image": { "@id": detailImage },
+                    "inLanguage": "en_US",
+                    "mainEntityOfPage": { "@id": `${detailUrl}#webpage` }
+                }
+            ]
+        };
+
+		const schemaBreadcrumb = {
+			"@context": "https://schema.org",
+			"@type": "BreadcrumbList",
+			"itemListElement": [
+				{
+					"@type": "ListItem",
+					"position": 1,
+					"name": "Home",
+                    "item": `${CONFIG.DOMAIN}/`
+				},
+				{
+					"@type": "ListItem",
+					"position": 2,
+					"name": cleanTitle,
+                    "item": detailUrl
+				}
+			]
+		};
+
+		injectSchema(schemaGraph);
+		injectSchema(schemaBreadcrumb);
 
         applySeoMeta({
-            title: `${detailTitleBase} - ${CONFIG.SITE_NAME}`,
+            title: `${cleanTitle} - ${CONFIG.SITE_NAME}`,
             description: detailDescription,
-            keywords: detailKeywords || CONFIG.DEFAULT_KEYWORDS,
+            keywords: detailKeywords,
             image: detailImage,
             url: detailUrl,
-            type: 'article'
+            type: 'article',
+            createdAt: pubDateUTC
         });
 
 		const bodyHtml = contentData.map((text, i) => {
 			const imgUrl = (imagesData && imagesData[i]) ? (imagesData[i].url || imagesData[i]) : "";
-			const imgTag = imgUrl ? `<img src="${imgUrl}" alt="${news.keyword || news.title}" style="width:50%; border-radius:8px; margin: 10px 0 20px 0;">` : "";
+			const imgTag = imgUrl ? `<img src="${imgUrl}" alt="${cleanTitle}" style="width:100%; max-width:600px; height:auto; border-radius:8px; margin: 15px 0;" loading="lazy">` : "";
 			return `<p>${text}</p>${imgTag}`;
 		}).join('');
 		
+        const backlinksHtml = '';
+		//const backlinksHtml = (resBacklinks && resBacklinks.data) ? resBacklinks.data.map(l => `<a href="${l.url}" target="_blank" style="margin-right:10px; color:#0088cc;">${toTitleCase(l.keyword)}</a>`).join('• ') : '';
+		
+        const relatedHtml = (resRelated && resRelated.data)
+            ? resRelated.data.slice(0, 25).map(item => `
+                <div class="listNews" style="margin-bottom:15px; padding-bottom:10px; border-bottom: 1px solid #f0f0f0;">
+                    <small class="text-muted" style="font-size:11px;">${formatSimpleDate(item.created_at)}</small>
+                    <h3 style="font-size:14px; margin: 3px 0 0 0; line-height: 1.4;">
+                        <a href="${getLink(item.slug, 'askme')}" style="color:#086cab; text-decoration:none;">${toTitleCase(item.keyword)}</a>
+                    </h3>
+                </div>`).join('')
+            : '';
+
         const detailHtml = `<div class="row">
                 <div class="col-sm-8">
                     <article class="newsContent">
-                        <h1 style="font-size: 24px; line-height: 1.3; font-weight:bold; margin-top:0;">${toTitleCase(news.keyword)}</h1>
-                        <small class="text-muted">${formatIndoDate(news.created_at)}</small>
+                        <h1 style="font-size: 24px; line-height: 1.3; font-weight:bold; margin-top:0;">${cleanTitle}</h1>
+                        <small class="text-muted">${pubDateSimple}</small>
                         <hr>
                         <div>${bodyHtml}</div>
                         
+                        ${backlinksHtml ? `
                         <div style="margin-top: 40px; font-size: 16px; padding:5px; background:#fff; border-radius:8px;">
-                            <h4 class="sidebar-title" style="border-left:4px solid #333; padding-left:10px; font-weight:bold; margin-bottom:15px;">Recommended</h4>
-                            <div id="backlink-container" style="line-height:2;"><span class="skeleton sk-text"></span></div>
-                        </div>
+							<h3 class="sidebar-title" style="border-left:4px solid #333; padding-left:10px; font-weight:bold; margin-bottom:15px; font-size:1.2em;">Recommended</h3>
+							<div style="line-height:2;">${backlinksHtml}</div>
+						</div>` : ''}
                     </article>
                 </div>
                 <aside class="col-sm-4">
-					<div id="ads-320x50" style="width:300px; height:250px; margin-bottom:30px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; color:#999; border-radius:8px;">ADVERTISEMENT</div>
-                    <h4 class="sidebar-title" style="font-weight:bold; border-bottom:2px solid #333; padding-bottom:10px; margin-bottom:20px;">Related Posts</h4>
-                    <div id="related-container">
-                        <div class="skeleton sk-item" style="height:50px;"></div><div class="skeleton sk-item" style="height:50px;"></div>
-                    </div>
+                    <div id="ads-320x50" style="width:320px; height:50px; margin-bottom:30px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; color:#999; border-radius:8px; margin-left:auto; margin-right:auto;"></div>
+					
+                    ${relatedHtml ? `
+                    <h2 class="sidebar-title" style="font-weight:bold; border-bottom:2px solid #333; padding-bottom:10px; margin-bottom:20px; font-size:1.5em;">Related Posts</h2>
+					<div>${relatedHtml}</div>
+                    ` : ''}
                 </aside>
             </div>`;
 
         document.body.innerHTML = wrapInLayout(detailHtml);
-
-        fetchAPI('/api/backlinks').then(b => {
-            const container = document.getElementById('backlink-container');
-            if(container && b && b.data) {
-                container.innerHTML = b.data.map(l => `<a href="${l.url}" target="_blank" style="margin-right:10px; color:#0088cc;">${toTitleCase(l.keyword)}</a>`).join('• ');
-            }
-        });
-
-        fetchAPI('/api/news/related').then(r => {
-            const container = document.getElementById('related-container');
-            if(container && r && r.data) {
-                container.innerHTML = r.data.slice(0, 25).map(item => `
-                    <dl class="listNews" style="margin-bottom:15px; padding-bottom:10px;">
-                        <small class="text-muted" style="font-size:11px;">${formatIndoDate(item.created_at)}</small>
-                        <dt style="font-size:14px; margin-top:3px;">
-                            <a href="${getLink(item.slug, 'askme')}" style="color:#086cab; text-decoration:none;">
-                                ${toTitleCase(item.keyword)}
-                            </a>
-                        </dt>
-                    </dl>`).join('');
-            }
-        });
     };
 
     const renderRawXml = async (type) => {
 		try {
-			const targetUrl = `${CONFIG.API_URL}/api/${type}?key=${CONFIG.API_KEY}&domain=${encodeURIComponent(CONFIG.DOMAIN)}`;
+            const urlFormat = isTldMode ? 'tld' : 'blogspot';
+            
+            const currentPage = pageParam || 1;
+            
+			const targetUrl = `${CONFIG.API_URL}/api/${type}?key=${CONFIG.API_KEY}&domain=${encodeURIComponent(CONFIG.DOMAIN)}&db=${CONFIG.DATABASE_NAME}&format=${urlFormat}&page=${currentPage}`;
 
 			const res = await fetch(targetUrl, {
 				method: 'GET',
@@ -480,7 +552,7 @@
 			});
 
 			if (!res.ok) {
-				if (res.status === 403) throw new Error('Akses Ditolak (403): Cek API_KEY di .env Backend dan Frontend harus sama.');
+				if (res.status === 403) throw new Error('Akses Ditolak (403)');
 				throw new Error(`Server merespon dengan status: ${res.status}`);
 			}
 
@@ -500,34 +572,29 @@
 				</div>`;
 		}
 	};
-    const injectMetaLinks = () => {
-        if (!document.querySelector('link[rel="sitemap"]')) {
-            const s = document.createElement('link'); s.rel = 'sitemap'; s.type = 'application/xml'; s.href = `${CONFIG.DOMAIN}/?page=sitemap`;
-            document.head.appendChild(s);
-        }
-    };
-
-    injectMetaLinks();
     
-    if (pageParam === 'sitemap') await renderRawXml('sitemap');
-    else if (pageParam === 'rss') await renderRawXml('rss');
-    else if (detailSlug) {
-        await loadDetail(detailSlug, paramType);
-		if (typeof initHistats === "function") initHistats();
-		if (typeof direct === "function") direct(); else if (window.direct && typeof window.direct === "function") window.direct();
-        if (typeof fillDetailAds === "function") {
-            const topAds = document.getElementById('top-home-ads');
-            if (topAds) topAds.style.display = 'block'; 
-            fillDetailAds();
-        }
-    } else {
-        await loadHome();
-		if (typeof initHistats === "function") initHistats();
-		if (typeof direct === "function") direct(); else if (window.direct && typeof window.direct === "function") window.direct();
+    const lowerPath = pathName.toLowerCase();
+	if (pageParam === 'sitemap' || lowerPath.endsWith('sitemap.xml') || lowerPath.endsWith('atom.xml')) {
+		await renderRawXml('sitemap'); 
+	} 
+	else if (pageParam === 'rss' || lowerPath.endsWith('rss.xml')) {
+		await renderRawXml('rss');
+	} 
+	else if (detailSlug) {
+		await loadDetail(detailSlug, paramType);
 		if (typeof fillHomeAds === "function") {
 			const topAds = document.getElementById('ads-728x90');
-            if (topAds) topAds.style.display = 'block'; 
-            fillHomeAds();
+			if (topAds) { topAds.style.display = 'block'; fillHomeAds(); }
 		}
-    }
+		if (typeof fillDetailAds === "function") fillDetailAds();
+        if (typeof fillStickyAds === "function") fillStickyAds(); 
+	} 
+	else {
+		await loadHome();
+		if (typeof fillHomeAds === "function") {
+			const topAds = document.getElementById('ads-728x90');
+			if (topAds) { topAds.style.display = 'block'; fillHomeAds(); }
+		}
+        if (typeof fillStickyAds === "function") fillStickyAds(); 
+	}
 })();
