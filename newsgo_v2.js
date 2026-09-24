@@ -1,5 +1,3 @@
-  <script>
-  //<![CDATA[
   (function(){
     "use strict";
     var root=document.getElementById("newsgo-app"),apiOrigin=(root&&root.getAttribute("data-newsgo-api-origin")||"").replace(/\/$/,"");
@@ -32,5 +30,4 @@
     window.addEventListener("mousemove",loadStickyFooterAd,{passive:true,once:true});
     setTimeout(loadStickyFooterAd,4000);
   }());
-  //]]>
-  </script>
+
