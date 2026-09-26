@@ -56,19 +56,12 @@
     var wrapper = document.createElement('div');
     wrapper.id = 'adsterra-sticky-footer';
 
-    var closeBtn = document.createElement('button');
-    closeBtn.id = 'adsterra-close-btn';
-    closeBtn.type = 'button';
-    closeBtn.title = 'Close Ad';
-    closeBtn.innerText = '✕ Close';
-    closeBtn.onclick = function () {
-      wrapper.remove();
-    };
+    
 
     var container = document.createElement('div');
     container.id = 'adsterra-banner-container';
 
-    wrapper.appendChild(closeBtn);
+  
     wrapper.appendChild(container);
     document.body.appendChild(wrapper);
 
