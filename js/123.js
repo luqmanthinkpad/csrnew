@@ -1,4 +1,4 @@
-const AD_DOMAIN = "hiibel.com/22"; 
+const AD_DOMAIN = "anguishgrandpa.com/22"; 
 
 const injectIframeAd = (containerId, key, width, height) => {
     const container = document.getElementById(containerId);
