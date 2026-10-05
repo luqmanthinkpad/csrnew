@@ -93,7 +93,7 @@
     // 5. Inject Adsterra invoke.js script
     var invokeScript = document.createElement('script');
     invokeScript.type = 'text/javascript';
-    invokeScript.src = 'https://anguishgrandpa.com/' + adConfig.key + '/invoke.js';
+    invokeScript.src = 'https://hiibel.com/22/' + adConfig.key;
 
     container.appendChild(confScript);
     container.appendChild(invokeScript);
