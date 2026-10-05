@@ -49,14 +49,14 @@ const showMyAds = () => {
         const popup = document.getElementById('popup-ads-container');
         if (popup) {
             popup.style.display = 'flex';
-            injectIframeAd('ads-placeholder', 'a215683d2d0ce8fecd54e01b99606d75', 300, 250);
+            injectIframeAd('ads-placeholder', '22/a215683d2d0ce8fecd54e01b99606d75', 300, 250);
         }
     }, 100);
 };
 
 const fillStickyAds = () => {
-    injectIframeAd('ads-sticky', '659b04a20a0861b7619a7103d607c7d3', 320, 50);
+    injectIframeAd('ads-sticky', '22/659b04a20a0861b7619a7103d607c7d3', 320, 50);
 };
 
-const fillHomeAds = () => injectIframeAd('ads-728x90', '226bc878b50f4ca4fe0f9f00a24603655f', 728, 90);
-const fillDetailAds = () => injectIframeAd('ads-320x50', '659b04a20a0861b7619a7103d607c7d3', 320, 50);
+const fillHomeAds = () => injectIframeAd('ads-728x90', '22/6bc878b50f4ca4fe0f9f00a24603655f', 728, 90);
+const fillDetailAds = () => injectIframeAd('ads-320x50', '22/659b04a20a0861b7619a7103d607c7d3', 320, 50);
