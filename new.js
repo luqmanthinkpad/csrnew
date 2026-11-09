@@ -37,31 +37,8 @@
     '#floating-footer-ad-inner {',
     '  position: relative;',
     '  pointer-events: auto;',
-    '  background: #ffffff;',
-    '  padding: 4px;',
-    '  border-radius: 6px 6px 0 0;',
-    '  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.15);',
+    '  background: transparent;',
     '  line-height: 0;',
-    '}',
-    '#floating-footer-ad-close {',
-    '  position: absolute;',
-    '  top: -24px;',
-    '  right: 0;',
-    '  width: 24px;',
-    '  height: 24px;',
-    '  background: rgba(0, 0, 0, 0.75);',
-    '  color: #ffffff;',
-    '  border: none;',
-    '  border-radius: 4px 4px 0 0;',
-    '  font-family: Arial, sans-serif;',
-    '  font-size: 16px;',
-    '  line-height: 24px;',
-    '  text-align: center;',
-    '  cursor: pointer;',
-    '  padding: 0;',
-    '}',
-    '#floating-footer-ad-close:hover {',
-    '  background: rgba(0, 0, 0, 0.9);',
     '}',
     '#floating-footer-ad-slot {',
     '  width: ' + adConfig.width + 'px;',
@@ -86,8 +63,6 @@
       '<style>' + styles + '</style>' +
       '<div id="floating-footer-ad">' +
         '<div id="floating-footer-ad-inner">' +
-          '<button id="floating-footer-ad-close" type="button" aria-label="Close ad" ' +
-            'onclick="var el=document.getElementById(\'floating-footer-ad\');if(el)el.style.display=\'none\';">&times;</button>' +
           '<div id="floating-footer-ad-slot">' +
             '<scr' + 'ipt>' +
               'atOptions = {' +
@@ -115,15 +90,6 @@
     var inner = document.createElement('div');
     inner.id = 'floating-footer-ad-inner';
 
-    var closeBtn = document.createElement('button');
-    closeBtn.id = 'floating-footer-ad-close';
-    closeBtn.type = 'button';
-    closeBtn.setAttribute('aria-label', 'Close ad');
-    closeBtn.innerHTML = '&times;';
-    closeBtn.onclick = function () {
-      wrapper.style.display = 'none';
-    };
-
     var slot = document.createElement('div');
     slot.id = 'floating-footer-ad-slot';
 
@@ -135,7 +101,6 @@
     iframe.style.border = '0';
     slot.appendChild(iframe);
 
-    inner.appendChild(closeBtn);
     inner.appendChild(slot);
     wrapper.appendChild(inner);
     document.body.appendChild(wrapper);
