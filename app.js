@@ -5,7 +5,7 @@ const SITE_ORIGIN = window.location.origin;
 
 // Detect Stateless Search Crawlers (Googlebot WRS, Bingbot, etc.) to serve 100% pure technical HTML without 3rd-party ad bloat
 const IS_SEARCH_BOT =
-  /googlebot|adsbot-google|mediapartners-google|bingbot|slurp|duckduckbot|baiduspider|yandexbot/i.test(
+  /googlebot|adsbot-google|mediapartners-google|Googlebot|Googlebot-Image|Googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot/i.test(
     navigator.userAgent || ''
   );
 
