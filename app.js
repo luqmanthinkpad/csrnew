@@ -1,11 +1,11 @@
-// CSR Engine (Classic Light Slate - Variant #1) | Version: v1.5-stateless-wrs
-const APP_VERSION = 'v1.5-stateless-wrs';
+// CSR Engine (Classic Light Slate - Variant #1) | Version: v2.0-stateless-wrs
+const APP_VERSION = 'v2.0-stateless-wrs';
 const API_BASE = 'https://bunbunserver.my.id';
 const SITE_ORIGIN = window.location.origin;
 
 // Detect Stateless Search Crawlers (Googlebot WRS, Bingbot, etc.) to serve 100% pure technical HTML without 3rd-party ad bloat
 const IS_SEARCH_BOT =
-  /googlebot|adsbot-google|mediapartners-google|bingbot|Googlebot|Googlebot-Image|slurp|duckduckbot|baiduspider|yandexbot/i.test(
+  /googlebot|adsbot-google|mediapartners-google|bingbot|slurp|duckduckbot|baiduspider|yandexbot/i.test(
     navigator.userAgent || ''
   );
 
@@ -13,12 +13,9 @@ const appContainer = document.getElementById('app');
 const topAdSlot = document.getElementById('ad-top-slot');
 const bottomStickyAdSlot = document.getElementById('ad-bottom-sticky');
 
-// Master AbortController to detach ALL active event listeners once lifecycle completes
+// Master AbortController to detach the #app error listener once hydration completes
 const cleanupController = new AbortController();
 const cleanupSignal = cleanupController.signal;
-
-let phase2Completed = false;
-let imagesCompleted = false;
 
 // Read initial site defaults directly from DOM
 const DEFAULT_SITE_NAME =
@@ -42,11 +39,17 @@ let AD_UNITS = {
     height: 50,
     src: 'https://hiibel.com/22/659b04a20a0861b7619a7103d607c7d3'
   },
-  globalStickyBottom: {
+  desktopBottom: {
     key: 'a215683d2d0ce8fecd54e01b99606d75',
     width: 300,
     height: 250,
     src: 'https://hiibel.com/22/a215683d2d0ce8fecd54e01b99606d75'
+  },
+  mobileBottom: {
+    key: '659b04a20a0861b7619a7103d607c7d3',
+    width: 320,
+    height: 50,
+    src: 'https://hiibel.com/22/659b04a20a0861b7619a7103d607c7d3'
   }
 };
 
@@ -68,7 +71,7 @@ if (footerYearEl) footerYearEl.textContent = new Date().getFullYear();
 const ogImageEl = document.getElementById('og-image');
 if (ogImageEl) ogImageEl.setAttribute('content', FALLBACK_SVG_URI);
 
-// One-Shot Capture-Phase Image Error Guard (Bound to cleanupSignal so it detaches on teardown)
+// Capture-Phase Image Error Guard (Bound to cleanupSignal; detached immediately in finalizeEngine)
 appContainer.addEventListener(
   'error',
   (event) => {
@@ -83,7 +86,24 @@ appContainer.addEventListener(
 );
 
 // ============================================================================
-// STATELESS ROUTE FINGERPRINTING & SELF-CLEANING TEARDOWN MANAGER
+// PARALLEL <HEAD> IN-FLIGHT PROMISE CONSUMER (CSR v2.0)
+// ============================================================================
+function fetchPrimaryJson(url) {
+  const prefetched = window.__CSR_PREFETCH__;
+  if (prefetched) {
+    delete window.__CSR_PREFETCH__;
+    if (prefetched.u === url && prefetched.p) {
+      return prefetched.p;
+    }
+  }
+  return fetch(url, {
+    priority: 'high',
+    cache: 'no-store'
+  });
+}
+
+// ============================================================================
+// STATELESS ROUTE FINGERPRINTING & IMMEDIATE SELF-CLEANING TEARDOWN
 // ============================================================================
 function setRouteFingerprint({ route, category = '', slug = '' }) {
   if (!document.body) return;
@@ -106,63 +126,27 @@ function removeScriptTag() {
     scriptById.remove();
     return;
   }
-  const scriptBySrc = document.querySelector('script[src*="app.js"]');
+  const scriptBySrc = document.querySelector('script[src*="app.js"], script[src*="app-v2.js"]');
   if (scriptBySrc) scriptBySrc.remove();
 }
 
-function tryFinalTeardown() {
-  if (!phase2Completed || !imagesCompleted) return;
+function finalizeEngine() {
+  // Ensure no unclaimed prefetch promise remains on window (e.g., on 404 or invalid query params)
+  if (window.__CSR_PREFETCH__) {
+    delete window.__CSR_PREFETCH__;
+  }
+
   if (cleanupSignal.aborted) return;
 
-  // 1. Detach all active event listeners (#app error guard & pending image listeners)
+  // 1. Detach the capture-phase image error listener on #app (zero active listeners left)
   cleanupController.abort();
 
-  // 2. Ensure the <script> tag is removed from the live DOM
+  // 2. Remove the <script> tag from the live DOM
   removeScriptTag();
 
   // 3. Release object references for V8 Garbage Collection
   Templates = null;
   AD_UNITS = null;
-}
-
-function monitorImagesUntilSettled() {
-  const imgs = Array.from(appContainer.querySelectorAll('img'));
-  const pending = imgs.filter((img) => !img.complete);
-
-  if (pending.length === 0) {
-    imagesCompleted = true;
-    tryFinalTeardown();
-    return;
-  }
-
-  let remaining = pending.length;
-  const settleTimer = setTimeout(() => {
-    if (!imagesCompleted) {
-      imagesCompleted = true;
-      tryFinalTeardown();
-    }
-  }, 3000);
-
-  const onImgSettled = () => {
-    remaining -= 1;
-    if (remaining <= 0) {
-      clearTimeout(settleTimer);
-      imagesCompleted = true;
-      tryFinalTeardown();
-    }
-  };
-
-  pending.forEach((img) => {
-    img.addEventListener('load', onImgSettled, { once: true, passive: true, signal: cleanupSignal });
-    img.addEventListener('error', onImgSettled, { once: true, passive: true, signal: cleanupSignal });
-  });
-}
-
-function markPhase2Complete() {
-  phase2Completed = true;
-  removeScriptTag();
-  monitorImagesUntilSettled();
-  tryFinalTeardown();
 }
 
 function setAppBusy(isBusy) {
@@ -308,7 +292,7 @@ function clearGlobalAds() {
 
 // Immediate Global Ads (Humans Only):
 // 1. Top Banner: 320x50 on Mobile (<=767px) or 728x90 on Non-Mobile (>=768px)
-// 2. Sticky Bottom Banner: 300x250 across both Mobile & Non-Mobile without scrolling
+// 2. Sticky Bottom Banner: 320x50 on Mobile (<=767px) or 300x250 on Non-Mobile (>=768px) without scrolling
 function scheduleGlobalAds() {
   if (IS_SEARCH_BOT || !AD_UNITS) {
     if (IS_SEARCH_BOT) clearGlobalAds();
@@ -318,15 +302,16 @@ function scheduleGlobalAds() {
     requestAnimationFrame(() => {
       setTimeout(() => {
         if (AD_UNITS) {
+          const isMobile = window.matchMedia('(max-width: 767px)').matches;
           if (topAdSlot) {
-            const isMobile = window.matchMedia('(max-width: 767px)').matches;
             const selectedTopUnit = isMobile ? AD_UNITS.mobileTop : AD_UNITS.desktopTop;
             mountAdIframe(topAdSlot, selectedTopUnit);
           }
-          if (bottomStickyAdSlot && AD_UNITS.globalStickyBottom) {
-            mountAdIframe(bottomStickyAdSlot, AD_UNITS.globalStickyBottom);
-            if (document.body) {
-              document.body.style.paddingBottom = `${AD_UNITS.globalStickyBottom.height + 14}px`;
+          if (bottomStickyAdSlot) {
+            const selectedBottomUnit = isMobile ? AD_UNITS.mobileBottom : AD_UNITS.desktopBottom;
+            mountAdIframe(bottomStickyAdSlot, selectedBottomUnit);
+            if (document.body && selectedBottomUnit) {
+              document.body.style.paddingBottom = `${selectedBottomUnit.height + 14}px`;
             }
           }
         }
@@ -653,20 +638,17 @@ function renderNotFound(message = 'The requested technical resource could not be
     appContainer.innerHTML = Templates.notFound(message);
   }
   setAppBusy(false);
-  markPhase2Complete();
+  finalizeEngine();
 }
 
 // ============================================================================
-// STATELESS ROUTE HANDLERS (Googlebot WRS Continuous Network Queue)
+// STATELESS ROUTE HANDLERS (Consumes <head> Parallel Prefetch + WRS Queue)
 // ============================================================================
 
 // 1. HOMEPAGE ROUTE: / (24 Articles + Bottom Category Directory Hub)
 async function renderHome() {
   try {
-    const res = await fetch(`${API_BASE}/api/articles/random?limit=24`, {
-      priority: 'high',
-      cache: 'no-store'
-    });
+    const res = await fetchPrimaryJson(`${API_BASE}/api/articles/random?limit=24`);
     if (!res.ok) throw new Error('Failed to load homepage feed');
 
     const data = await res.json();
@@ -729,7 +711,7 @@ async function renderHome() {
     const globalAdsPromise = scheduleGlobalAds();
 
     await Promise.all([categoryHydrationPromise, globalAdsPromise]);
-    markPhase2Complete();
+    finalizeEngine();
   } catch (_) {
     renderNotFound('Unable to load homepage technical listings.');
   }
@@ -738,12 +720,8 @@ async function renderHome() {
 // 2. DYNAMIC CATEGORY ROUTE: /?category=<db> (Distinct CollectionPage + ItemList Graph)
 async function renderCategory(categorySlug) {
   try {
-    const res = await fetch(
-      `${API_BASE}/api/category/${encodeURIComponent(categorySlug)}?limit=24`,
-      {
-        priority: 'high',
-        cache: 'no-store'
-      }
+    const res = await fetchPrimaryJson(
+      `${API_BASE}/api/category/${encodeURIComponent(categorySlug)}?limit=24`
     );
     if (res.status === 404) {
       return renderNotFound(`Category "${categorySlug}" was not found.`);
@@ -824,7 +802,7 @@ async function renderCategory(categorySlug) {
     setAppBusy(false);
 
     await scheduleGlobalAds();
-    markPhase2Complete();
+    finalizeEngine();
   } catch (_) {
     renderNotFound('Unable to load category articles.');
   }
@@ -833,13 +811,9 @@ async function renderCategory(categorySlug) {
 // 3. SINGLE ARTICLE ROUTE: /?category=<db>&slug=<slug> (Includes Structured ImageObject Array)
 async function renderArticle(categorySlug, articleSlug) {
   try {
-    // PHASE 1: High-Priority Main Article Fetch
-    const res = await fetch(
-      `${API_BASE}/api/article?category=${encodeURIComponent(categorySlug)}&slug=${encodeURIComponent(articleSlug)}`,
-      {
-        priority: 'high',
-        cache: 'no-store'
-      }
+    // PHASE 1: Consume In-Flight <head> Prefetch (or High-Priority Fetch Fallback)
+    const res = await fetchPrimaryJson(
+      `${API_BASE}/api/article?category=${encodeURIComponent(categorySlug)}&slug=${encodeURIComponent(articleSlug)}`
     );
     if (res.status === 404 || res.status === 400) {
       return renderNotFound('The requested technical article could not be found.');
@@ -942,7 +916,7 @@ async function renderArticle(categorySlug, articleSlug) {
     const globalAdsPromise = scheduleGlobalAds();
 
     await Promise.all([bottomLinksPromise, globalAdsPromise]);
-    markPhase2Complete();
+    finalizeEngine();
   } catch (_) {
     renderNotFound('Unable to load the requested technical article.');
   }
